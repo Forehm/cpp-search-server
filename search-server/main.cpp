@@ -11,49 +11,62 @@ using namespace std;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
-string ReadLine() {
+string ReadLine()
+{
     string s;
     getline(cin, s);
     return s;
 }
 
-int ReadLineWithNumber() {
+int ReadLineWithNumber()
+{
     int result = 0;
     cin >> result;
     ReadLine();
     return result;
 }
 
-vector<string> SplitIntoWords(const string& text) {
+vector<string> SplitIntoWords(const string& text)
+{
     vector<string> words;
     string word;
-    for (const char c : text) {
-        if (c == ' ') {
-            if (!word.empty()) {
+    for (const char c : text)
+    {
+        if (c == ' ')
+        {
+            if (!word.empty())
+            {
                 words.push_back(word);
                 word.clear();
             }
         }
-        else {
+        else
+        {
             word += c;
         }
     }
-    if (!word.empty()) {
+    if (!word.empty())
+    {
         words.push_back(word);
     }
 
     return words;
 }
 
-struct Document {
+struct Document
+{
     int id;
     double relevance;
 };
 
-class SearchServer {
+class SearchServer
+{
 public:
-    void SetStopWords(const string& text) {
-        for (const string& word : SplitIntoWords(text)) {
+
+    void SetStopWords(const string& text)
+    {
+        for (const string& word : SplitIntoWords(text))
+        {
             stop_words_.insert(word);
         }
     }
@@ -69,22 +82,26 @@ public:
         ++document_count_;
     }
 
-    vector<Document> FindTopDocuments(const string& raw_query) const {
+    vector<Document> FindTopDocuments(const string& raw_query) const
+    {
         const Query query_words = ParseQuery(raw_query);
         auto matched_documents = FindAllDocuments(query_words);
 
         sort(matched_documents.begin(), matched_documents.end(),
-            [](const Document& lhs, const Document& rhs) {
+            [](const Document& lhs, const Document& rhs)
+            {
                 return lhs.relevance > rhs.relevance;
             });
-        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT) {
+
+        if (matched_documents.size() > MAX_RESULT_DOCUMENT_COUNT)
+        {
             matched_documents.resize(MAX_RESULT_DOCUMENT_COUNT);
         }
+
         return matched_documents;
     }
 
 private:
-
 
     struct Query
     {
@@ -92,33 +109,55 @@ private:
         set<string> plus_words;
     };
 
+
     map<string, map<int, double>> word_to_document_freqs_;
 
     set<string> stop_words_;
 
     int document_count_ = 0;
 
-    vector<Document> FindAllDocuments(const Query& query_words) const {
+
+    vector<Document> FindAllDocuments(const Query& query_words) const
+    {
         vector<Document> matched_documents;
         map<int, double> document_to_relevance;
 
         for (const string& word : query_words.plus_words)
         {
-            if (word_to_document_freqs_.count(word) > 0 && query_words.minus_words.count(word) == 0)
+            if (word_to_document_freqs_.count(word) == 0)
             {
-                for (const auto& [id, tf] : word_to_document_freqs_.at(word))
+                continue;
+            }
+            else
+            {
+                int documents_with_word = word_to_document_freqs_.at(word).size();
+
+                for (const auto& [document_id, tf] : word_to_document_freqs_.at(word))
                 {
-                    if (word_to_document_freqs_.at(word).size() != document_count_ && query_words.minus_words.count(word) == 0)
-                    {
-                        document_to_relevance[id] += (tf * log((double)document_count_ / (double)word_to_document_freqs_.at(word).size()));
-                    }
+
+                    document_to_relevance[document_id] += (tf * log((double)document_count_ / (double)documents_with_word));
+
                 }
             }
         }
 
-        for (const auto& [id, relevance] : document_to_relevance)
+
+        for (const string& word : query_words.minus_words)
         {
-            matched_documents.push_back({ id, relevance });
+            if (word_to_document_freqs_.count(word) != 0)
+            {
+                for (const auto& [document_id, relevance] : word_to_document_freqs_.at(word))
+                {
+                    document_to_relevance.erase(document_id);
+                }
+            }
+        }
+
+
+
+        for (const auto& [document_id, relevance] : document_to_relevance)
+        {
+            matched_documents.push_back({ document_id, relevance });
         }
 
 
@@ -130,20 +169,25 @@ private:
         return stop_words_.count(word) > 0;
     }
 
-    vector<string> SplitIntoWordsNoStop(const string& text) const {
+    vector<string> SplitIntoWordsNoStop(const string& text) const
+    {
         vector<string> words;
-        for (const string& word : SplitIntoWords(text)) {
-            if (!IsStopWord(word)) {
+        for (const string& word : SplitIntoWords(text))
+        {
+            if (!IsStopWord(word))
+            {
                 words.push_back(word);
             }
         }
         return words;
     }
 
-    Query ParseQuery(const string& text) const {
+    Query ParseQuery(const string& text) const
+    {
         Query query;
         set<string> query_words;
-        for (const string& word : SplitIntoWordsNoStop(text)) {
+        for (const string& word : SplitIntoWordsNoStop(text))
+        {
             query_words.insert(word);
         }
 
@@ -170,7 +214,8 @@ SearchServer CreateSearchServer()
     search_server.SetStopWords(ReadLine());
 
     const int document_count = ReadLineWithNumber();
-    for (int document_id = 0; document_id < document_count; ++document_id) {
+    for (int document_id = 0; document_id < document_count; ++document_id)
+    {
         search_server.AddDocument(document_id, ReadLine());
     }
 
@@ -185,7 +230,8 @@ int main()
     const SearchServer search_server = CreateSearchServer();
 
     const string query = ReadLine();
-    for (const auto& [document_id, relevance] : search_server.FindTopDocuments(query)) {
+    for (const auto& [document_id, relevance] : search_server.FindTopDocuments(query))
+    {
         cout << "{ document_id = "s << document_id << ", "
             << "relevance = "s << relevance << " }"s << endl;
     }
