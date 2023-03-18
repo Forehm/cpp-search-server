@@ -1,11 +1,11 @@
-#include <algorithm>
-#include <cmath>
 #include <iostream>
 #include <map>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -117,6 +117,11 @@ private:
     int document_count_ = 0;
 
 
+    double ComputeIDF(const string& word) const
+    {
+        return log(document_count_ * 1.0 / word_to_document_freqs_.at(word).size());
+    }
+
     vector<Document> FindAllDocuments(const Query& query_words) const
     {
         vector<Document> matched_documents;
@@ -130,12 +135,12 @@ private:
             }
             else
             {
-                int documents_with_word = word_to_document_freqs_.at(word).size();
+                const double word_idf = ComputeIDF(word);
 
                 for (const auto& [document_id, tf] : word_to_document_freqs_.at(word))
                 {
 
-                    document_to_relevance[document_id] += (tf * log((double)document_count_ / (double)documents_with_word));
+                    document_to_relevance[document_id] += tf * word_idf;
 
                 }
             }
@@ -185,19 +190,14 @@ private:
     Query ParseQuery(const string& text) const
     {
         Query query;
-        set<string> query_words;
-        for (const string& word : SplitIntoWordsNoStop(text))
-        {
-            query_words.insert(word);
-        }
 
-        for (const string& word : query_words)
+        for (const string& word : SplitIntoWordsNoStop(text))
         {
             if (word[0] == '-')
             {
                 query.minus_words.insert(word.substr(1));
             }
-            else if (word[0] != '-')
+            else
             {
                 query.plus_words.insert(word);
             }
