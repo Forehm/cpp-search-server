@@ -260,6 +260,250 @@ private:
 
 };
 
+/////////////////////////////////////Tests start here/////////////////////////////////
+
+
+
+
+void AssertImpl(bool value, const string& expr_str, const string& file, const string& func, unsigned line,
+    const string& hint) {
+    if (!value) {
+        cout << file << "("s << line << "): "s << func << ": "s;
+        cout << "ASSERT("s << expr_str << ") failed."s;
+        if (!hint.empty()) {
+            cout << " Hint: "s << hint;
+        }
+        cout << endl;
+        abort();
+    }
+}
+
+template <typename T, typename U>
+void AssertEqualImpl(const T& t, const U& u, const string& t_str, const string& u_str, const string& file,
+    const string& func, unsigned line, const string& hint) {
+    if (t != u) {
+        cout << boolalpha;
+        cout << file << "("s << line << "): "s << func << ": "s;
+        cout << "ASSERT_EQUAL("s << t_str << ", "s << u_str << ") failed: "s;
+        cout << t << " != "s << u << "."s;
+        if (!hint.empty()) {
+            cout << " Hint: "s << hint;
+        }
+        cout << endl;
+        abort();
+    }
+}
+
+template <typename TestFunc>
+void RunTestImpl(TestFunc t_func, const string& func) {
+    t_func();
+    cerr << func << " OK" << endl;
+}
+
+
+#define ASSERT(expr) AssertImpl(!!(expr), #expr, __FILE__, __FUNCTION__, __LINE__, ""s)
+
+#define ASSERT_HINT(expr, hint) AssertImpl(!!(expr), #expr, __FILE__, __FUNCTION__, __LINE__, (hint))
+
+#define ASSERT_EQUAL(a, b) AssertEqualImpl((a), (b), #a, #b, __FILE__, __FUNCTION__, __LINE__, ""s)
+
+#define ASSERT_EQUAL_HINT(a, b, hint) AssertEqualImpl((a), (b), #a, #b, __FILE__, __FUNCTION__, __LINE__, (hint))
+
+#define RUN_TEST(func) RunTestImpl((func), #func)
+
+
+
+void TestExcludeStopWordsFromAddedDocumentContent() {
+    const int doc_id = 42;
+    const string content = "cat in the city"s;
+    const vector<int> ratings = { 1, 2, 3 };
+    {
+        SearchServer server;
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        const auto found_docs = server.FindTopDocuments("in"s);
+        ASSERT_EQUAL(found_docs.size(), 1u);
+        const Document& doc0 = found_docs[0];
+        ASSERT_EQUAL(doc0.id, doc_id);
+    }
+
+    {
+        SearchServer server;
+        server.SetStopWords("in the"s);
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        ASSERT_HINT(server.FindTopDocuments("in"s).empty(),
+            "Stop words must be excluded from documents"s);
+    }
+}
+
+
+void TestOfAddingDocuments()
+{
+    int doc_id = 42;
+    string content = "a blue cat with beautiful green eyes"s;
+    vector<int> ratings = { 1, 2, 3 };
+    SearchServer server;
+    server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+
+    auto found_docs = server.FindTopDocuments("cat"s);
+    ASSERT(found_docs.size() == 1);
+
+    doc_id = 43;
+    content = "a white cat with blue eyes"s;
+    ratings = { 2, 3, 4 };
+    server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+
+    found_docs = server.FindTopDocuments("cat"s);
+    ASSERT(found_docs.size() == 2);
+
+    doc_id = 44;
+    content = "a white dog with a long tail"s;
+    ratings = { 2, 3, 4 };
+    server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+
+    found_docs = server.FindTopDocuments("dog"s);
+    ASSERT_HINT(found_docs.size() == 1,
+        "Server must not find documents that do not contain the query word");
+
+    found_docs = server.FindTopDocuments("dog and cat"s);
+    ASSERT_HINT(found_docs.size() == 3,
+        "Server must find documents by all the query words");
+
+    found_docs = server.FindTopDocuments("children playing basketball"s);
+    ASSERT_HINT(found_docs.size() == 0,
+        "Server must not add documents if it is not demanded");
+}
+
+void TestMinusWords()
+{
+    int doc_id = 42;
+    string  content = "a blue cat with green eyes"s;
+    vector<int> ratings = { 1, 2, 3 };
+    SearchServer server;
+    server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+
+    {
+        auto found_docs = server.FindTopDocuments("cat"s);
+        ASSERT(found_docs.size() == 1);
+    }
+
+    {
+        auto found_docs = server.FindTopDocuments("cat -green"s);
+        ASSERT_HINT(found_docs.empty(),
+            "Server must pay attention to minus words");
+    }
+
+    {
+        content = "a cool cat";
+        doc_id = 1;
+        ratings = { 2, 6, 7 };
+        server.AddDocument(doc_id, content, DocumentStatus::ACTUAL, ratings);
+        auto found_docs = server.FindTopDocuments("cat -green"s);
+        ASSERT_HINT(found_docs.size() == 1,
+            "Server must pay attention to minus words and do not find documents that contain such words");
+    }
+}
+
+void TestOfCorrectRelevanceSorting()
+{
+
+    SearchServer server;
+    server.AddDocument(1, "cat with dog", DocumentStatus::ACTUAL, { 1, 2, 3 });
+    server.AddDocument(2, "cat and cat", DocumentStatus::ACTUAL, { 2, 3, 4 });
+    server.AddDocument(3, "cat and cat and one more cat", DocumentStatus::ACTUAL, { 3, 4, 5 });
+
+    auto found_docs = server.FindTopDocuments("cat and"s);
+
+    ASSERT_HINT(found_docs[0].id == 2, "Incorrect realisation of sorting documents by id");
+    ASSERT_HINT(found_docs[1].id == 3, "Incorrect realisation of sorting documents by id");
+    ASSERT_HINT(found_docs[2].id == 1, "Incorrect realisation of sorting documents by id");
+
+}
+
+void TestAverageRating()
+{
+    SearchServer server;
+    server.AddDocument(1, "cat with dog", DocumentStatus::ACTUAL, { 1, 2, 3 });
+    server.AddDocument(2, "cat and cat", DocumentStatus::ACTUAL, { 2, 3, 4 });
+    server.AddDocument(3, "cat and cat and one more cat", DocumentStatus::ACTUAL, { 3, 4, 5 });
+
+    auto found_docs = server.FindTopDocuments("cat and"s);
+
+    ASSERT_HINT(found_docs[0].rating == 3, "Incorrect realisation of computing tha average rating");
+    ASSERT_HINT(found_docs[1].rating == 4, "Incorrect realisation of computing tha average rating");
+    ASSERT_HINT(found_docs[2].rating == 2, "Incorrect realisation of computing tha average rating");
+}
+
+void TestWorkWithPredicate()
+{
+    SearchServer server;
+    server.AddDocument(1, "cat with dog", DocumentStatus::ACTUAL, { 1, 2, 3 });
+    server.AddDocument(2, "cat and cat", DocumentStatus::ACTUAL, { 2, 3, 4 });
+    server.AddDocument(3, "cat and cat and one more cat", DocumentStatus::ACTUAL, { 3, 4, 5 });
+
+    auto found_docs = server.FindTopDocuments("cat and"s, [](int document_id, DocumentStatus status, int rating)
+        {
+            return document_id % 2 == 1;
+        });
+    ASSERT_HINT(found_docs.size() == 2,
+        "Incorrect realisation of working with a custom predicate");
+
+    found_docs = server.FindTopDocuments("cat and"s, [](int document_id, DocumentStatus status, int rating)
+        {
+            return document_id % 2 == 0;
+        });
+    ASSERT_HINT(found_docs.size() == 1,
+        "Incorrect realisation of working with a custom predicate");
+}
+
+void TestSearchWithStatus()
+{
+    SearchServer server;
+    server.AddDocument(1, "cat with dog", DocumentStatus::BANNED, { 1, 2, 3 });
+    server.AddDocument(2, "cat and cat", DocumentStatus::ACTUAL, { 2, 3, 4 });
+    server.AddDocument(3, "cat and cat and one more cat", DocumentStatus::ACTUAL, { 3, 4, 5 });
+
+    auto found_docs = server.FindTopDocuments("cat and"s, [](int document_id, DocumentStatus status, int rating)
+        {
+            return status == DocumentStatus::BANNED;
+        });
+    ASSERT_HINT(found_docs.size() == 1,
+        "Incorrect realisation of finding documents with a custom status");
+
+    found_docs = server.FindTopDocuments("cat and"s);
+    ASSERT_HINT(found_docs.size() == 2,
+        "Incorrect realisation of finding documents with a custom status");
+}
+
+void TestOfCorrectRelevanceComputing()
+{
+    SearchServer server;
+    server.AddDocument(1, "white cat and trendy collar", DocumentStatus::ACTUAL, { 1, 2, 3 });
+    server.AddDocument(2, "fluffy cat fluffy tail", DocumentStatus::ACTUAL, { 2, 3, 4 });
+    server.AddDocument(3, "groomed dog beautiful eyes", DocumentStatus::ACTUAL, { 3, 4, 5 });
+
+    double rel1 = 0.0, rel2 = 0.0, rel3 = 0.0;
+
+    rel1 = server.FindTopDocuments("fluffy groomed cat")[0].relevance;
+    rel2 = server.FindTopDocuments("fluffy groomed cat")[1].relevance;
+    rel3 = server.FindTopDocuments("fluffy groomed cat")[2].relevance;
+
+    ASSERT_EQUAL_HINT((floor(rel1 * 10000) / 10000), 0.6506, "The realisation of the relevance computing is wrong");
+    ASSERT_EQUAL_HINT((floor(rel2 * 10000) / 10000), 0.2746, "The realisation of the relevance computing is wrong");
+    ASSERT_EQUAL_HINT((floor(rel3 * 10000) / 10000), 0.0810, "The realisation of the relevance computing is wrong");
+}
+
+void TestSearchServer() {
+    RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
+    RUN_TEST(TestOfAddingDocuments);
+    RUN_TEST(TestMinusWords);
+    RUN_TEST(TestOfCorrectRelevanceSorting);
+    RUN_TEST(TestAverageRating);
+    RUN_TEST(TestWorkWithPredicate);
+    RUN_TEST(TestSearchWithStatus);
+    RUN_TEST(TestOfCorrectRelevanceComputing);
+}
+
+///////////////////////////////////Tests end here///////////////////////////////////
 void PrintDocument(const Document& document) {
     cout << "{ "s
         << "document_id = "s << document.id << ", "s
