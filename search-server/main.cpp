@@ -428,9 +428,9 @@ void TestAverageRating()
 
     auto found_docs = server.FindTopDocuments("cat and"s);
 
-    ASSERT_HINT(found_docs[0].rating == 3, "Incorrect realisation of computing tha average rating");
-    ASSERT_HINT(found_docs[1].rating == 4, "Incorrect realisation of computing tha average rating");
-    ASSERT_HINT(found_docs[2].rating == 2, "Incorrect realisation of computing tha average rating");
+    ASSERT_HINT(found_docs[0].rating == ((2 + 3 + 4) / 3), "Incorrect realisation of computing tha average rating");
+    ASSERT_HINT(found_docs[1].rating == ((3 + 4 + 5) / 3), "Incorrect realisation of computing tha average rating");
+    ASSERT_HINT(found_docs[2].rating == ((1 + 2 + 3) / 3), "Incorrect realisation of computing tha average rating");
 }
 
 void TestWorkWithPredicate()
@@ -495,7 +495,7 @@ void TestOfCorrectRelevanceComputing()
 void TestSearchServer() {
     RUN_TEST(TestExcludeStopWordsFromAddedDocumentContent);
     RUN_TEST(TestOfAddingDocuments);
-    RUN_TEST(TestMinusWords);
+    RUN_TEST(TestOfConsideringMinusWords);
     RUN_TEST(TestOfCorrectRelevanceSorting);
     RUN_TEST(TestAverageRating);
     RUN_TEST(TestWorkWithPredicate);
@@ -511,6 +511,7 @@ void PrintDocument(const Document& document) {
         << "rating = "s << document.rating
         << " }"s << endl;
 }
+
 int main() {
     SearchServer search_server;
     search_server.SetStopWords("и в на"s);
