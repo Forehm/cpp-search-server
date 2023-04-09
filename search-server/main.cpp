@@ -373,7 +373,7 @@ void TestOfAddingDocuments()
         "Server must not add documents if it is not demanded");
 }
 
-void TestMinusWords()
+void TestOfConsideringMinusWords()
 {
     int doc_id = 42;
     string  content = "a blue cat with green eyes"s;
