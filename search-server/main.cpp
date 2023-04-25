@@ -98,19 +98,21 @@ enum class DocumentStatus
 class SearchServer
 {
 public:
-    inline static constexpr int INVALID_DOCUMENT_ID = -1;
 
     template <typename StringContainer>
-    explicit SearchServer(const StringContainer& stop_words) : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
+    explicit SearchServer(const StringContainer& stop_words)
     {
-        for (const string& word : stop_words_)
+        for (const string& word : stop_words)
         {
-            if (HasForbiddenChars(word))
+            if (!IsValidWord(word))
             {
-                throw invalid_argument("arguments are wrong"s);
+                throw invalid_argument("stop words contain forbidden characters"s);
+            }
+            if (!word.empty())
+            {
+                stop_words_.insert(word);
             }
         }
-
     }
 
     explicit SearchServer(const string& stop_words_text)
@@ -121,10 +123,7 @@ public:
 
     void AddDocument(int document_id, const string& document, DocumentStatus status, const vector<int>& ratings)
     {
-        if (!IsValidDocument(document_id))
-        {
-            throw invalid_argument("the arguments are wrong"s);
-        }
+        ThrowIfInvalidDocument(document_id);
 
         const vector<string> words = SplitIntoWordsNoStop(document);
         const double inv_word_count = 1.0 / words.size();
@@ -139,12 +138,12 @@ public:
 
     int GetDocumentId(int index) const
     {
-        if (index > GetDocumentCount() || index < 0)
+        if (index > document_ids_by_order_.size() || index < 0)
         {
-            throw out_of_range("there are no documents with such index"s);
+            throw out_of_range("Index is out of range while getting id"s);
         }
 
-        return index;
+        return document_ids_by_order_[index];
     }
 
     template <typename DocumentPredicate>
@@ -227,69 +226,35 @@ public:
         return tuple{ matched_words, documents_.at(document_id).status };
     }
 private:
+
     struct DocumentData
     {
         int rating;
         DocumentStatus status;
     };
-    const set<string> stop_words_;
+    set<string> stop_words_;
     map<string, map<int, double>> word_to_document_freqs_;
     map<int, DocumentData> documents_;
     vector<int> document_ids_by_order_;
 
-    static bool HasForbiddenChars(const string& word)
-    {
-        return !none_of(word.begin(), word.end(), [](char c)
-            {return c >= '\x00' && c < ' '; });
-    }
-
     static bool IsValidWord(const string& word)
     {
-        if (word.size() == 0)
-        {
-            return false;
-        }
-
-        if (word.size() == 1 && word[0] == '-')
-        {
-            return false;
-        }
-
-        if (word[word.size() - 1] == '-')
-        {
-            return false;
-        }
-
-        for (size_t i = 0; i < word.size() - 1; ++i)
-        {
-            if (word[i] == '-' && word[i + 1] == '-')
+        return none_of(word.begin(), word.end(), [](char c)
             {
-                return false;
-            }
-
-            if (word[i] == '-' && word[i + 1] == ' ')
-            {
-                return false;
-            }
-        }
-
-        return true;
+                return c >= '\0' && c < ' ';
+            });
     }
 
-
-
-    bool IsValidDocument(int document_id) const
+    void ThrowIfInvalidDocument(int document_id) const
     {
         if (documents_.count(document_id) > 0)
         {
             throw invalid_argument("There are documents with the same id"s);
         }
-
         if (document_id < 0)
         {
             throw invalid_argument("id cannot be less than zero"s);
         }
-        return true;
     }
 
     bool IsStopWord(const string& word) const
@@ -302,14 +267,9 @@ private:
         vector<string> words;
         for (const string& word : SplitIntoWords(text))
         {
-            if (HasForbiddenChars(word))
-            {
-                throw invalid_argument("document has forbidden characters"s);
-            }
-
             if (!IsValidWord(word))
             {
-                throw invalid_argument("the query contains extra minuses"s);
+                throw invalid_argument("the query contains forbidden characters"s);
             }
 
             if (!IsStopWord(word))
@@ -349,6 +309,19 @@ private:
             is_minus = true;
             text = text.substr(1);
         }
+        if (text.empty())
+        {
+            throw invalid_argument("The query word consists of the single minus"s);
+        }
+        if (text[0] == '-')
+        {
+            throw invalid_argument("It seems like there are two or more minuses in the query word"s);
+        }
+        if (!IsValidWord(text))
+        {
+            throw invalid_argument("The query word contains some forbidden characters"s);
+        }
+
         return { text, is_minus, IsStopWord(text) };
     }
 
@@ -363,16 +336,6 @@ private:
         Query query;
         for (const string& word : SplitIntoWords(text))
         {
-            if (HasForbiddenChars(word))
-            {
-                throw invalid_argument("the query contains forbidden characters"s);
-            }
-
-            if (!IsValidWord(word))
-            {
-                throw invalid_argument("the query word is not valid, it may contain some extra symbols"s);
-            }
-
             const QueryWord query_word = ParseQueryWord(word);
             if (!query_word.is_stop)
             {
