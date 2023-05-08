@@ -305,7 +305,6 @@ private:
         return matched_documents;
     }
 };
-
 template<typename Iterator>
 class IteratorRange
 {
@@ -334,22 +333,13 @@ private:
     vector<IteratorRange<Iterator>> vector_of_pages;
 
 public:
-    Paginator(Iterator it_begin, Iterator it_end, const int size)
+    Paginator(Iterator it_begin, Iterator it_end, const size_t size_of_the_page)
     {
-        while (it_begin != it_end)
+        for (Iterator page_it_begin = it_begin, page_it_end = it_begin; page_it_begin != it_end; page_it_begin = page_it_end)
         {
-            if (distance(it_begin, it_end) > size)
-            {
-                IteratorRange<Iterator> it(it_begin, it_begin + size, size);
-                vector_of_pages.push_back(it);
-                it_begin += size;
-            }
-            else
-            {
-                IteratorRange<Iterator> it(it_begin, it_begin + distance(it_begin, it_end), size);
-                vector_of_pages.push_back(it);
-                break;
-            }
+            page_it_end = next(page_it_begin, min(size_of_the_page, static_cast<size_t>(distance(page_it_begin, it_end))));
+            IteratorRange<Iterator> it_of_current_page(page_it_begin, page_it_end, size_of_the_page);
+            vector_of_pages.emplace_back(it_of_current_page);
         }
     }
 
@@ -379,7 +369,6 @@ ostream& operator << (ostream& os, IteratorRange<Iterator> it)
 
     return os;
 }
-
 
 
 template <typename Container>
