@@ -385,7 +385,8 @@ void PrintRange(It range_begin, It range_end) {
     cout << endl;
 }
 
-class RequestQueue {
+class RequestQueue
+{
 public:
     explicit RequestQueue(const SearchServer& search_server) : server(search_server), no_result_requests_counter_(0)
     {
@@ -393,42 +394,51 @@ public:
     }
 
     template <typename DocumentPredicate>
-    vector<Document> AddFindRequest(const string& raw_query, DocumentPredicate document_predicate) {
-        ClearOldRequests();
+    vector<Document> AddFindRequest(const string& raw_query, DocumentPredicate document_predicate)
+    {
         vector<Document> results = server.FindTopDocuments(raw_query, document_predicate);
-        if (answers == 0) { ++no_result_requests_counter_; }
-        requests_.push_back({ answers, 1 });
+        AddRequest(results.size());
         return results;
     }
-    vector<Document> AddFindRequest(const string& raw_query, DocumentStatus status) {
-        ClearOldRequests();
+
+    vector<Document> AddFindRequest(const string& raw_query, DocumentStatus status)
+    {
         vector<Document> results = server.FindTopDocuments(raw_query, status);
-        int answers = results.size();
-        if (answers == 0) { ++no_result_requests_counter_; }
-        requests_.push_back({ answers, 1 });
+        AddRequest(results.size());
         return results;
     }
-    vector<Document> AddFindRequest(const string& raw_query) {
-        ClearOldRequests();
+
+    vector<Document> AddFindRequest(const string& raw_query)
+    {
         vector<Document> results = server.FindTopDocuments(raw_query);
-        int answers = results.size();
-        if (answers == 0) { ++no_result_requests_counter_; }
-        requests_.push_back({ answers, 1 });
+        AddRequest(results.size());
         return results;
     }
-    int GetNoResultRequests() const {
+
+    int GetNoResultRequests() const
+    {
         return no_result_requests_counter_;
     }
+
 private:
-    struct QueryResult {
-        int number_of_answers;
-        int current_time;
+
+    struct QueryResult
+    {
+        uint64_t number_of_answers;
+        uint64_t current_time;
     };
 
     deque<QueryResult> requests_;
     const SearchServer& server;
     int no_result_requests_counter_;
     const static int min_in_day_ = 1440;
+
+    void AddRequest(const size_t answers_amount)
+    {
+        ClearOldRequests();
+        if (answers_amount == 0) { ++no_result_requests_counter_; }
+        requests_.push_back({ answers_amount, 1 });
+    }
 
     void ClearOldRequests()
     {
