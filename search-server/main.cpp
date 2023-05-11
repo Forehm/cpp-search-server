@@ -375,3 +375,75 @@ template <typename Container>
 auto Paginate(const Container& c, size_t page_size) {
     return Paginator(begin(c), end(c), page_size);
 }
+
+
+template <typename It>
+void PrintRange(It range_begin, It range_end) {
+    for (auto it = range_begin; it != range_end; ++it) {
+        cout << *it << " "s;
+    }
+    cout << endl;
+}
+
+class RequestQueue {
+public:
+    explicit RequestQueue(const SearchServer& search_server) : server(search_server), no_result_requests_counter_(0)
+    {
+
+    }
+
+    template <typename DocumentPredicate>
+    vector<Document> AddFindRequest(const string& raw_query, DocumentPredicate document_predicate) {
+        ClearOldRequests();
+        vector<Document> results = server.FindTopDocuments(raw_query, document_predicate);
+        if (answers == 0) { ++no_result_requests_counter_; }
+        requests_.push_back({ answers, 1 });
+        return results;
+    }
+    vector<Document> AddFindRequest(const string& raw_query, DocumentStatus status) {
+        ClearOldRequests();
+        vector<Document> results = server.FindTopDocuments(raw_query, status);
+        int answers = results.size();
+        if (answers == 0) { ++no_result_requests_counter_; }
+        requests_.push_back({ answers, 1 });
+        return results;
+    }
+    vector<Document> AddFindRequest(const string& raw_query) {
+        ClearOldRequests();
+        vector<Document> results = server.FindTopDocuments(raw_query);
+        int answers = results.size();
+        if (answers == 0) { ++no_result_requests_counter_; }
+        requests_.push_back({ answers, 1 });
+        return results;
+    }
+    int GetNoResultRequests() const {
+        return no_result_requests_counter_;
+    }
+private:
+    struct QueryResult {
+        int number_of_answers;
+        int current_time;
+    };
+
+    deque<QueryResult> requests_;
+    const SearchServer& server;
+    int no_result_requests_counter_;
+    const static int min_in_day_ = 1440;
+
+    void ClearOldRequests()
+    {
+        if (!requests_.empty())
+        {
+            for (QueryResult& request : requests_)
+            {
+                ++request.current_time;
+            }
+            if (requests_.front().current_time > min_in_day_)
+            {
+                requests_.pop_front();
+                --no_result_requests_counter_;
+            }
+        }
+    }
+
+};
