@@ -11,7 +11,7 @@
 #include <deque>
 #include "string_processing.h"
 #include "document.h"
-
+#include "log_duration.h"
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
 
 
@@ -97,6 +97,7 @@ private:
 template<typename DocumentPredicate>
 inline std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query, DocumentPredicate document_predicate) const
 {
+    LOG_DURATION_STREAM("Operation time", cout);
     const auto query = ParseQuery(raw_query);
 
     auto matched_documents = FindAllDocuments(query, document_predicate);
