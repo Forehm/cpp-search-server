@@ -22,7 +22,10 @@ int RequestQueue::GetNoResultRequests() const
 void RequestQueue::AddRequest(const size_t answers_amount)
 {
     ClearOldRequests();
-    if (answers_amount == 0) { ++no_result_requests_counter_; }
+    if (answers_amount == 0) 
+    { 
+        ++no_result_requests_counter_; 
+    }
     requests_.push_back({ answers_amount, 1 });
 }
 

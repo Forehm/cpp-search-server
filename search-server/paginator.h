@@ -35,16 +35,6 @@ public:
 };
 
 
-std::ostream& operator << (std::ostream& os, Document doc)
-{
-    os << "{ document_id = " << doc.id;
-    os << ", relevance = " << doc.relevance;
-    os << ", rating = " << doc.rating;
-    os << " }";
-    return os;
-}
-
-
 template<typename Iterator>
 std::ostream& operator << (std::ostream& os, IteratorRange<Iterator> it)
 {
