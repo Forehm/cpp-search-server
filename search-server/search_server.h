@@ -14,9 +14,9 @@
 #include "log_duration.h"
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+const double INACCURACY = 1e-6;
 
 
-using namespace std;
 
 class SearchServer {
 public:
@@ -24,8 +24,8 @@ public:
     explicit SearchServer(const StringContainer& stop_words)
         : stop_words_(MakeUniqueNonEmptyStrings(stop_words))
     {
-        if (!all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
-            throw invalid_argument("Some of stop words are invalid");
+        if (!std::all_of(stop_words_.begin(), stop_words_.end(), IsValidWord)) {
+            throw std::invalid_argument("Some of stop words are invalid");
         }
     }
 
@@ -55,7 +55,7 @@ public:
 
     std::set<int>::const_iterator end() const;
 
-    std::map<std::string, double> GetWordFrequencies(int document_id) const;
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
 
     void RemoveDocument(int document_id);
 
@@ -111,7 +111,7 @@ inline std::vector<Document> SearchServer::FindTopDocuments(const std::string& r
 
     sort(matched_documents.begin(), matched_documents.end(),
         [](const Document& lhs, const Document& rhs) {
-            if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
+            if (std::abs(lhs.relevance - rhs.relevance) < INACCURACY) {
                 return lhs.rating > rhs.rating;
             }
             else {
@@ -128,8 +128,8 @@ inline std::vector<Document> SearchServer::FindTopDocuments(const std::string& r
 template<typename DocumentPredicate>
 inline std::vector<Document> SearchServer::FindAllDocuments(const Query& query, DocumentPredicate document_predicate) const
 {
-    map<int, double> document_to_relevance;
-    for (const string& word : query.plus_words) {
+    std::map<int, double> document_to_relevance;
+    for (const std::string& word : query.plus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }
@@ -142,7 +142,7 @@ inline std::vector<Document> SearchServer::FindAllDocuments(const Query& query, 
         }
     }
 
-    for (const string& word : query.minus_words) {
+    for (const std::string& word : query.minus_words) {
         if (word_to_document_freqs_.count(word) == 0) {
             continue;
         }

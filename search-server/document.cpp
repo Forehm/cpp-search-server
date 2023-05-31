@@ -14,7 +14,7 @@ bool operator != (const Document& lhs, const Document& rhs) {
 }
 
 bool operator < (const Document& lhs, const Document& rhs) {
-   
+
     if (abs(lhs.relevance - rhs.relevance) < 1e-6) {
         return lhs.rating < rhs.rating;
     }

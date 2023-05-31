@@ -18,7 +18,7 @@ void RemoveDuplicates(SearchServer& search_server)
                 return word.first;
             });
 
-        if (unique_documents.count(words) == 0) 
+        if (unique_documents.count(words) == 0)
         {
             unique_documents.insert(words);
         }
@@ -30,7 +30,7 @@ void RemoveDuplicates(SearchServer& search_server)
 
     for (const int id : ids_to_delete)
     {
-        cout << "Found duplicate document id " + to_string(id) << "\n";
+        cout << "Found duplicate document id " << id << endl;
         search_server.RemoveDocument(id);
     }
 }

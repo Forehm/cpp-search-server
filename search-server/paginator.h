@@ -24,7 +24,7 @@ template<typename Iterator>
 class Paginator
 {
 private:
-    vector<IteratorRange<Iterator>> vector_of_pages;
+    std::vector<IteratorRange<Iterator>> vector_of_pages;
 
 public:
     Paginator(Iterator it_begin, Iterator it_end, const size_t size_of_the_page);
@@ -85,7 +85,7 @@ inline Paginator<Iterator>::Paginator(Iterator it_begin, Iterator it_end, const 
 {
     for (Iterator page_it_begin = it_begin, page_it_end = it_begin; page_it_begin != it_end; page_it_begin = page_it_end)
     {
-        page_it_end = next(page_it_begin, min(size_of_the_page, static_cast<size_t>(distance(page_it_begin, it_end))));
+        page_it_end = next(page_it_begin, std::min(size_of_the_page, static_cast<size_t>(distance(page_it_begin, it_end))));
         IteratorRange<Iterator> it_of_current_page(page_it_begin, page_it_end, size_of_the_page);
         vector_of_pages.emplace_back(it_of_current_page);
     }
