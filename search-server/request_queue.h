@@ -19,6 +19,7 @@ public:
 
     int GetNoResultRequests() const;
 
+
 private:
 
     struct QueryResult
@@ -37,6 +38,7 @@ private:
     void ClearOldRequests();
 
 };
+
 
 template<typename DocumentPredicate>
 inline std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentPredicate document_predicate)
