@@ -40,7 +40,7 @@ namespace TestRunnerPrivate {
         return os << "}";
     }
 
-}  // namespace TestRunnerPrivate
+}  
 
 template <class T>
 std::ostream& operator<<(std::ostream& os, const std::vector<T>& s) {
@@ -92,26 +92,6 @@ inline void Assert(bool b, const std::string& hint) {
     AssertEqual(b, true, hint);
 }
 
-/**
- * Класс TestRunner запускает тест-функции.
- * Пример:
- *  void Test1() {
- *      // ...
- *  }
- *
- *  void Test2() {
- *      // ...
- *  }
- *
- *  int main() {
- *      TestRunner tr;
- *      // Запускает функцию Test1. Если тест будет провален, его имя будет выведено как
- *      // First test
- *      tr.RunTest(Test1, "First test"s);
- *      // Если имя теста, совпадает с именем тест-функции, можно использовать максро RUN_TEST:
- *      RUN_TEST(tr, Test2); // Аналогично tr.RunTest(Test2, "Test2");
- *  }
- */
 class TestRunner {
 public:
     template <class TestFunc>
@@ -146,16 +126,6 @@ private:
 #define FILE_NAME __FILE__
 #endif
 
-/**
- * Макрос ASSERT_EQUAL проверяет значения выражений x и y на равенство.
- * Если значения не равны, тест считается проваленным.
- *
- * Пример:
- *  void Test() {
- *      ASSERT_EQUAL(2 + 2, 4);
- *      ASSERT_EQUAL(2 + 2, 5); // �та проверка не сработает, и тест будет провален
- *  }
- */
 #define ASSERT_EQUAL(x, y)                                                                       \
     {                                                                                            \
         std::ostringstream __assert_equal_private_os;                                            \
@@ -163,23 +133,7 @@ private:
         AssertEqual(x, y, __assert_equal_private_os.str());                                      \
     }
 
- /**
-  * Макрос ASSERT проверяет истинность выражения x. Выражение x должно
-  * конвертироваться к типу bool.
-  * Если выражение x ложно, тест считается проваленным. Если выражение x истинно,
-  * выполнение теста продолжается.
-  *
-  * Пример:
-  *  void Test() {
-  *      ASSERT(2 + 2 == 4);
-  *      ASSERT(2); // число 2 при преобразовании к bool станет значением true
-  *      ASSERT(false); // здесь тест провалится
-  *      string user_name = "Harry Potter"s;
-  *      // Если раскомментировать следующую строку, программа не скомпилируется,
-  *      // так как string не может быть преобразован к типу bool.
-  *      // ASSERT(user_name);
-  *  }
-  */
+
 #define ASSERT(x)                                                                   \
     {                                                                               \
         std::ostringstream __assert_private_os;                                     \
@@ -187,39 +141,10 @@ private:
         Assert(static_cast<bool>(x), __assert_private_os.str());                    \
     }
 
-  /**
-   * Макрос RUN_TEST служит для удобного запуска тест-функции func.
-   * Параметр tr задаёт имя переменной типа TestRunner.
-   *
-   * Пример:
-   *  void Test1() {
-   *      // Содержимое тест-функции ...
-   *  }
-   *
-   *  void Test2() {
-   *      // Содержимое тест-функции ...
-   *  }
-   *
-   *  int main() {
-   *      TestRunner tr;
-   *      RUN_TEST(tr, Test1);
-   *      RUN_TEST(tr, Test2);
-   *  }
-   */
+ 
 #define RUN_TEST(tr, func) tr.RunTest(func, #func)
 
-   /**
-    * Макрос ASSERT_THROWS проверяет, что при вычислении выражения expr будет
-    * выброшено исключение типа expected_exception.
-    * Если исключение выброшено не будет, либо выбросится исключение другого типа,
-    * тест считается проваленным.
-    *
-    * Пример:
-    *  void Test() {
-    *      using namespace std;
-    *      ASSERT_THROWS(stoi("not-a-number"s), invalid_argument);
-    *  }
-    */
+ 
 #define ASSERT_THROWS(expr, expected_exception)                                                   \
     {                                                                                             \
         bool __assert_private_flag = true;                                                        \
@@ -244,18 +169,7 @@ private:
         }                                                                                         \
     }
 
-    /**
-     * Макрос ASSERT_DOESNT_THROW проверяет, что при вычислении выражения expr
-     * не будет выброшено никаких исключений.
-     * Если при вычислении выражения expr выбросится исключение, тест будет провален.
-     *
-     * Пример:
-     *  void Test() {
-     *      vector<int> v;
-     *      v.push_back(1);
-     *      ASSERT_DOESNT_THROW(v.at(0)));
-     *  }
-     */
+ 
 #define ASSERT_DOESNT_THROW(expr)                               \
     try {                                                       \
         expr;                                                   \
