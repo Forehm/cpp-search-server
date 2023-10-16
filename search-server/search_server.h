@@ -231,7 +231,7 @@ std::vector<Document> SearchServer::FindAllDocuments(const std::execution::seque
     return matched_documents;
 }
 
-template<typename DocumentPredicate>///------------------------------<<<<
+template<typename DocumentPredicate>
 std::vector<Document> SearchServer::FindAllDocuments(const std::execution::parallel_policy& policy, std::string_view raw_query, DocumentPredicate document_predicate) const {
     ConcurrentMap<int, double> document_to_relevance(10);
     const auto query = ParseQuery(raw_query);
