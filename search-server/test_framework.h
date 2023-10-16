@@ -76,15 +76,6 @@ std::ostream& operator<<(std::ostream& os, const std::unordered_map<K, V, H, Eq>
     return TestRunnerPrivate::PrintMap(os, m);
 }
 
-/**
- * Сравнивает значения t и u. Если они не равны, тест проваливается.
- * Строка hint содержит подсказку, которая выводится, если тест провален.
- *
- * Пример:
- *  void Test() {
- *      Assert("Hello "s + "world"s, "Hello world"s, "String concatenation error"s);
- *  }
- */
 template <class T, class U>
 void AssertEqual(const T& t, const U& u, const std::string& hint = {}) {
     if (!(t == u)) {
@@ -97,10 +88,6 @@ void AssertEqual(const T& t, const U& u, const std::string& hint = {}) {
     }
 }
 
-/**
- * Проверяет истинность значения b, если нет, тест проваливается.
- * Строка hint содержит подсказку, которая выводится, если тест провален.
- */
 inline void Assert(bool b, const std::string& hint) {
     AssertEqual(b, true, hint);
 }
@@ -166,7 +153,7 @@ private:
  * Пример:
  *  void Test() {
  *      ASSERT_EQUAL(2 + 2, 4);
- *      ASSERT_EQUAL(2 + 2, 5); // �та проверка не сработает, и тест будет провален
+ *      ASSERT_EQUAL(2 + 2, 5); // �та проверка не сработает, и тест будет провален
  *  }
  */
 #define ASSERT_EQUAL(x, y)                                                                       \
