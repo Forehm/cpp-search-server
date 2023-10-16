@@ -10,14 +10,18 @@
 #include <unordered_set>
 #include <vector>
 
-namespace TestRunnerPrivate {
+namespace TestRunnerPrivate
+{
 
     template <class Map>
-    std::ostream& PrintMap(std::ostream& os, const Map& m) {
+    std::ostream& PrintMap(std::ostream& os, const Map& m)
+{
         os << "{";
         bool first = true;
-        for (const auto& kv : m) {
-            if (!first) {
+        for (const auto& kv : m) 
+        {
+            if (!first) 
+            {
                 os << ", ";
             }
             first = false;
@@ -27,11 +31,14 @@ namespace TestRunnerPrivate {
     }
 
     template <class Set>
-    std::ostream& PrintSet(std::ostream& os, const Set& s) {
+    std::ostream& PrintSet(std::ostream& os, const Set& s) 
+{
         os << "{";
         bool first = true;
-        for (const auto& x : s) {
-            if (!first) {
+        for (const auto& x : s) 
+        {
+            if (!first) 
+            {
                 os << ", ";
             }
             first = false;
@@ -43,11 +50,14 @@ namespace TestRunnerPrivate {
 }  
 
 template <class T>
-std::ostream& operator<<(std::ostream& os, const std::vector<T>& s) {
+std::ostream& operator<<(std::ostream& os, const std::vector<T>& s) 
+{
     os << "{";
     bool first = true;
-    for (const auto& x : s) {
-        if (!first) {
+    for (const auto& x : s) 
+    {
+        if (!first) 
+        {
             os << ", ";
         }
         first = false;
@@ -57,27 +67,32 @@ std::ostream& operator<<(std::ostream& os, const std::vector<T>& s) {
 }
 
 template <class T, class C>
-std::ostream& operator<<(std::ostream& os, const std::set<T, C>& s) {
+std::ostream& operator<<(std::ostream& os, const std::set<T, C>& s) 
+{
     return TestRunnerPrivate::PrintSet(os, s);
 }
 
 template <class T, class H, class Eq>
-std::ostream& operator<<(std::ostream& os, const std::unordered_set<T, H, Eq>& s) {
+std::ostream& operator<<(std::ostream& os, const std::unordered_set<T, H, Eq>& s)
+{
     return TestRunnerPrivate::PrintSet(os, s);
 }
 
 template <class K, class V, class C>
-std::ostream& operator<<(std::ostream& os, const std::map<K, V, C>& m) {
+std::ostream& operator<<(std::ostream& os, const std::map<K, V, C>& m)
+{
     return TestRunnerPrivate::PrintMap(os, m);
 }
 
 template <class K, class V, class H, class Eq>
-std::ostream& operator<<(std::ostream& os, const std::unordered_map<K, V, H, Eq>& m) {
+std::ostream& operator<<(std::ostream& os, const std::unordered_map<K, V, H, Eq>& m) 
+{
     return TestRunnerPrivate::PrintMap(os, m);
 }
 
 template <class T, class U>
-void AssertEqual(const T& t, const U& u, const std::string& hint = {}) {
+void AssertEqual(const T& t, const U& u, const std::string& hint = {}) 
+{
     if (!(t == u)) {
         std::ostringstream os;
         os << "Assertion failed: " << t << " != " << u;
@@ -88,31 +103,39 @@ void AssertEqual(const T& t, const U& u, const std::string& hint = {}) {
     }
 }
 
-inline void Assert(bool b, const std::string& hint) {
+inline void Assert(bool b, const std::string& hint)
+{
     AssertEqual(b, true, hint);
 }
 
-class TestRunner {
+class TestRunner
+{
 public:
     template <class TestFunc>
-    void RunTest(TestFunc func, const std::string& test_name) {
-        try {
+    void RunTest(TestFunc func, const std::string& test_name) 
+{
+        try 
+            {
             func();
             std::cerr << test_name << " OK" << std::endl;
         }
-        catch (std::exception& e) {
+        catch (std::exception& e)
+            {
             ++fail_count;
             std::cerr << test_name << " fail: " << e.what() << std::endl;
         }
-        catch (...) {
+        catch (...)
+            {
             ++fail_count;
             std::cerr << "Unknown exception caught" << std::endl;
         }
     }
 
-    ~TestRunner() {
+    ~TestRunner()
+{
         std::cerr.flush();
-        if (fail_count > 0) {
+        if (fail_count > 0) 
+        {
             std::cerr << fail_count << " unit tests failed. Terminate" << std::endl;
             exit(1);
         }
