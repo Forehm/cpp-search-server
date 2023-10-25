@@ -18,7 +18,8 @@ struct Document
     friend std::ostream& operator << (std::ostream& os, const Document& rhs);
 };
 
-enum class DocumentStatus {
+enum class DocumentStatus 
+{
     ACTUAL,
     IRRELEVANT,
     BANNED,
