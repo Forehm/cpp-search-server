@@ -2,7 +2,8 @@
 
 #include <iostream>
 
-struct Document {
+struct Document 
+{
     Document() = default;
     Document(int document_id, double document_relevance, int document_rating) :
         id(document_id), relevance(document_relevance), rating(document_rating) {}
