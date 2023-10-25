@@ -14,7 +14,8 @@
 using namespace std::string_literals;
 
 template <typename Key, typename Value>
-class ConcurrentMap {
+class ConcurrentMap 
+{
 private:
 
 public:
@@ -32,21 +33,25 @@ public:
     };
 
 
-    struct Access {
+    struct Access 
+{
         std::lock_guard<std::mutex> guard;
         Value& ref_to_value;
 
         Access(const Key& key, Bucket& bucket)
             : guard(bucket.mtx)
-            , ref_to_value(bucket.map[key]) {
+            , ref_to_value(bucket.map[key]) 
+        {
         }
     };
 
     explicit ConcurrentMap(size_t bucket_count)
-        : all_parts_(bucket_count) {
+        : all_parts_(bucket_count) 
+    {
     }
 
-    Access operator[](const Key& key) {
+    Access operator[](const Key& key) 
+    {
         auto& bucket = all_parts_[static_cast<uint64_t>(key) % all_parts_.size()];
         return { key, bucket };
     }
@@ -56,9 +61,11 @@ public:
         all_parts_[static_cast<uint64_t>(key) % all_parts_.size()].Erase(key);
     }
 
-    std::map<Key, Value> BuildOrdinaryMap() {
+    std::map<Key, Value> BuildOrdinaryMap()
+    {
         std::map<Key, Value> result;
-        for (auto& [mtx, map] : all_parts_) {
+        for (auto& [mtx, map] : all_parts_) 
+        {
             std::lock_guard g(mtx);
             result.insert(map.begin(), map.end());
         }
